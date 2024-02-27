@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ダーツ幅計算ツール</title>
+<style>
+    canvas {
+        border: 1px solid black;
+    }
+</style>
+</head>
+<body>
+    <label for="clothLength">布丈（タテmm）：</label>
+    <input type="number" id="clothLength" value="100"><br><br>
+
+    <label for="clothWidth">布幅（ヨコmm）：</label>
+    <input type="number" id="clothWidth" value="100"><br><br>
+
+    <label for="dartDepth">ダーツの深さ（mm）：</label>
+    <input type="number" id="dartDepth" value="0"><br><br>
+
+    <input type="radio" id="modeH" name="mode" value="H" checked>
+    <label for="modeH">ダーツによって作るふくらみの高さからダーツ幅を求める</label><br>
+
+    <input type="radio" id="modeL" name="mode" value="L">
+    <label for="modeL">ダーツによって作るふくらみの弛みの長さからダーツ幅を求める</label><br><br>
+
+    <label for="additionalInput" id="additionalInputLabel">ふくらみの高さ（mm）：</label>
+    <input type="number" id="additionalInput" value="0"><br><br>
+
+    <canvas id="canvas" width="100" height="100"></canvas><br><br>
+
+    <button id="calculateButton">計算</button><br><br>
+
+    <label for="dartWidth">算出したダーツ幅（mm）：</label>
+    <input type="text" id="dartWidth" readonly><br><br>
+
+    <canvas id="dartShapeCanvas" width="200" height="100"></canvas><br><br>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const clothLengthInput = document.getElementById('clothLength');
+        const clothWidthInput = document.getElementById('clothWidth');
+        const dartDepthInput = document.getElementById('dartDepth');
+        const modeHInput = document.getElementById('modeH');
+        const modeLInput = document.getElementById('modeL');
+        const additionalInputLabel = document.getElementById('additionalInputLabel');
+        const additionalInput = document.getElementById('additionalInput');
+        const calculateButton = document.getElementById('calculateButton');
+        const dartWidthInput = document.getElementById('dartWidth');
+        const dartShapeCanvas = document.getElementById('dartShapeCanvas');
+        const dartShapeCtx = dartShapeCanvas.getContext('2d');
+
+        const updateCanvas = () => {
+            const clothLength = parseInt(clothLengthInput.value);
+            const clothWidth = parseInt(clothWidthInput.value);
+            const dartDepth = parseInt(dartDepthInput.value);
+
+            canvas.width = clothWidth;
+            canvas.height = clothLength;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            // ダーツの深さ分の赤い線を描く
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(canvas.width / 2, 0);
+            ctx.lineTo(canvas.width / 2, dartDepth);
+            ctx.stroke();
+        };
+
+        const handleModeChange = () => {
+            if (modeHInput.checked) {
+                additionalInputLabel.textContent = 'ふくらみの高さ（mm）：';
+            } else if (modeLInput.checked) {
+                additionalInputLabel.textContent = '弛みの長さ（mm）：';
+            }
+            updateCanvas();
+        };
+
+        const calculateDartWidth = () => {
+            var added = 0;
+            var height = 0;
+            var dartWidth = 0;
+            const clothLength = parseInt(clothLengthInput.value);
+            const clothWidth = parseInt(clothWidthInput.value);
+            const dartDepth = parseInt(dartDepthInput.value);
+
+            if(modeLInput.checked) {
+              added = parseInt(additionalInput.value);
+              dartWidth = added / ((clothLength - dartDepth) / clothLength );
+            }
+            else {
+              height = parseInt(additionalInput.value);
+              added = Math.sqrt((clothWidth * clothWidth) + ((2*height) * (2*height))) - clothWidth;
+              dartWidth = added / ((clothLength - dartDepth) / clothLength );
+            }
+
+            dartWidthInput.value = dartWidth;
+
+            // 二等辺三角形を描く
+            dartShapeCtx.clearRect(0, 0, dartShapeCanvas.width, dartShapeCanvas.height);
+            dartShapeCtx.beginPath();
+            dartShapeCtx.moveTo(100 - dartWidth / 2, 100); // 底辺の左端
+            dartShapeCtx.lineTo(100, 100 - dartDepth); // 頂点
+            dartShapeCtx.lineTo(100 + dartWidth / 2, 100); // 底辺の右端
+            dartShapeCtx.closePath();
+            dartShapeCtx.stroke();
+        };
+
+        clothLengthInput.addEventListener('input', updateCanvas);
+        clothWidthInput.addEventListener('input', updateCanvas);
+        dartDepthInput.addEventListener('input', updateCanvas);
+        modeHInput.addEventListener('change', handleModeChange);
+        modeLInput.addEventListener('change', handleModeChange);
+        calculateButton.addEventListener('click', calculateDartWidth);
+
+        updateCanvas();
+    </script>
+</body>
+</html>
